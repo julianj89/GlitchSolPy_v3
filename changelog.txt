@@ -1,0 +1,18 @@
+
+
+1.Run pairs.py
+2.When New Pool written in pools.json
+3.Run Buy.py for that Pool   -   // Done on mainS.py (march 24th 9.27am)
+4.After Transaction Confirmed is shown  (8. Transaction Confirmed. Base mint of processed pool: 8fEtw6Z3NtgZbiv5A56A22Jm5x3uZcvB3FG1PFwg8pZM)
+5.Check wallet for that token address   /// Further testing needed as only first pool is being worked on (march 26 2024 08:54pm)   27march 2024 9.24pm added pool open time   
+6.Run Dexscreener.py continously for that token
+7.each time print(f"Price has increased by {increase}%, reaching {current_price}") is displayed for that token
+8.Run Sell.py for that token
+
+
+if still selling send alert telegram 'Potential Coin Detected'
+
+
+
+29 march 3.07pm - added pre launch time buys (10sec) and pools.json clear if fails
+31 march 3.14pm - added function to choose to skip pools that are openinging in over 1hr and pools that are already open

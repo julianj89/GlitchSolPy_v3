@@ -13,6 +13,22 @@ from cache_utils import  cached_sell_get_token_account, cached_get_token_account
 import json
 LAMPORTS_PER_SOL = 1000000000
 
+api_key = "__WBAOR-Ss_B2avG"
+
+def send_transaction_to_shyft(encoded_txn, api_key, network='mainnet-beta'):
+    url = "https://api.shyft.to/sol/v1/transaction/send_txn"
+    headers = {
+        "Content-Type": "application/json",
+        "x-api-key": api_key
+    }
+    payload = {
+        "network": network,
+        "encoded_transaction": encoded_txn
+    }
+    response = requests.post(url, json=payload, headers=headers)
+    return response.json()
+
+
 def load_and_validate_bought_pool_data(token_to_sell, file_path='pools.json'):
     with open(file_path, 'r') as file:
         pools_data = json.load(file)
@@ -91,26 +107,30 @@ def sell(solana_client, TOKEN_TO_SWAP_SELL, payer):
         signers = [payer]
         if WSOL_token_account_Instructions != None:
             swap_tx.add(WSOL_token_account_Instructions)
-        swap_tx.add(instructions_swap)
-        swap_tx.add(closeAcc)
+            swap_tx.add(instructions_swap)
+            swap_tx.add(closeAcc)
 
-        try:
-            print("8. Execute Transaction...")
-            start_time = time.time()
-            txn = solana_client.send_transaction(swap_tx, *signers)
-            txid_string_sig = txn.value
-            print("9. Transaction Successful")
-            print("Transaction Signature: ", txid_string_sig)
-        except RPCException as e:
-            print(f"Error: [{e.args[0].message}]...\nRetrying...")
-        except Exception as e:
-            print(f"Error: [{e}]...\nEnd...")
-            return "failed"
+    # Here you serialize, encode, and send the transaction to Shyft before executing it on the blockchain
+    encoded_txn = base58.b58encode(swap_tx.serialize()).decode('utf-8')
+    send_transaction_to_shyft(encoded_txn, "__WBAOR-Ss_B2avG")
+
+    try:
+        print("8. Execute Transaction...")
+        start_time = time.time()
+        txn = solana_client.send_transaction(swap_tx, *signers)
+        txid_string_sig = txn.value
+        print("9. Transaction Successful")
+        print("Transaction Signature: ", txid_string_sig)
+    except RPCException as e:
+        print(f"Error: [{e.args[0].message}]...\nRetrying...")
+    except Exception as e:
+        print(f"Error: [{e}]...\nEnd...")
+        return "failed"
 
 
 
 def main():
-    solana_client = Client("https://api.mainnet-beta.solana.com")
+    solana_client = Client("https://rpc.shyft.to?api_key=__WBAOR-Ss_B2avG")
     token_toSell = read_base_mint()
     private_key_string = "3G1ZJjjQAYvDCHhm4Tw7a7TPUfLBdsVhgd1AMmS4cQ1JKvhEc2AwePCk3cr1et5zbXBrz1tVtuY5pupVvYsH8LRu"
     private_key_bytes = base58.b58decode(private_key_string)
