@@ -8,7 +8,7 @@ import aiohttp
 from Buy2 import solana_client, execute_buy_operation, load_pools_data
 from dexscreener import read_base_mint, getSymbol, monitor_price
 from Sell import sell
-
+from walletcheck import WalletChecker
 
 # Load configuration
 def load_config():
@@ -33,27 +33,6 @@ async def check_for_new_pool(file_path='pools.json', interval=1):
             if current_data != initial_data:
                 return True  # File changed
 
-
-async def check_wallet_for_base_mint(base_mint):
-    #logging.debug("Entering check wallet function.")
-    headers = {
-        "x-api-key": "__WBAOR-Ss_B2avG"
-    }
-
-    url = f"https://api.shyft.to/sol/v1/wallet/token_balance?network=mainnet-beta&wallet=3XBdssBmvx8YYnqU9ioSD5wA4GRc1nKeta2CxUwfXXCb&token={base_mint}"
-
-    async with aiohttp.ClientSession() as session:
-        try:
-            async with session.get(url, headers=headers) as response:
-                response.raise_for_status()
-                result = await response.json()  # Use .json() to parse the response body as JSON
-                if result['success'] and float(result['result']['balance']) > 0:
-                    return True  # Token found with balance greater than 0
-                else:
-                    return False  # Token not found or balance is 0
-        except aiohttp.ClientError as e:
-            print(f"Error: {e}")
-            return False  # Return False in case of request failure
 
 async def clear_pools_json():
     async with aiofiles.open('pools.json', 'w') as file:
@@ -108,9 +87,11 @@ async def continuously_run():
                 if not base_mint:
                     print("No base_mint found for the transaction.")
                 else:
-                    if await check_wallet_for_base_mint(base_mint):
-                        print(f"Transaction confirmed via wallet balance check in {end_time - start_time:.2f} seconds.")
-                        await start_token_monitoring(base_mint)
+                        time.sleep(4)  # Wait 4 seconds to give time for the transaction to settle
+                        wallet_check_result = await checker.check_wallet_for_base_mint(config['wallet_address'], base_mint)
+                        if wallet_check_result:
+                            print(f"Transaction confirmed via wallet balance check in {end_time - start_time:.2f} seconds.")
+                            await start_token_monitoring(base_mint)
                     else:
                         print(f"Transaction might have failed, unable to confirm via wallet balance in {end_time - start_time:.2f} seconds.")
                         await clear_pools_json()
